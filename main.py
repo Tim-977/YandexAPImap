@@ -1,6 +1,4 @@
-# 5) Добавьте текстовое поле, в которое можно ввести запрос для поиска объекта.
-#    По завершению ввода (например, при нажатии на кнопку «Искать») требуется найти указанный объект, спозиционировать карту на его центральную точку, добавить метку на карту в центральную точку объекта.
-# 6) Сохраняйте созданную ранее метку при изменении масштаба, движении или изменении вида карты.
+# 7) Добавьте кнопку «Сброс поискового результата», по нажатию на которую точка найденного объекта сбрасывается.
 
 import os
 import sys
@@ -38,11 +36,13 @@ pygame.init()
 
 mode_btn_rect = pygame.Rect(545, 5, 50, 50)
 search_btn_rect = pygame.Rect(0, 450, 150, 150)
+clear_btn_rect = pygame.Rect(150, 450, 150, 150)
 
 screen = pygame.display.set_mode((600, 600))
 
 mode_btn_image = assistance.load_image('mode.png', -1)
 search_btn_image = assistance.load_image('search.png')
+clear_btn_image = assistance.load_image('clear.png')
 
 screen.blit(pygame.image.load(map_file), (0, 0))
 
@@ -60,13 +60,17 @@ while True:
                 print(f'VIEW|{l_arr[l_arr_ind]} -> {l_arr[(l_arr_ind + 1) % 3]}|')
                 l_arr_ind = (l_arr_ind + 1) % 3
                 flag = True
-            if search_btn_rect.collidepoint(event.pos):
+            elif search_btn_rect.collidepoint(event.pos):
                 toponym_to_find = input('TOPONYM: ')
                 #toponym_to_find = "Москва, Лобачевского, д. 92"
                 lon, lat = assistance.searchAdress(toponym_to_find, delta)
                 lon, lat = float(lon), float(lat)
                 toponym_lon, toponym_lat = lon, lat
                 point_flag = True
+                flag = True
+            elif clear_btn_rect.collidepoint(event.pos):
+                print('cleared')
+                point_flag = False
                 flag = True
 
         if event.type == pygame.KEYDOWN or flag:
@@ -121,6 +125,8 @@ while True:
             try:
                 if point_flag:
                     params["pt"] = ",".join([str(toponym_lon), str(toponym_lat), 'flag'])
+                else:
+                    del params["pt"]
             except:
                 pass
             response = requests.get(map_request, params=params)
@@ -140,4 +146,5 @@ while True:
 
     screen.blit(mode_btn_image, mode_btn_rect)
     screen.blit(search_btn_image, search_btn_rect)
+    screen.blit(clear_btn_image, clear_btn_rect)
     pygame.display.update()
