@@ -2,9 +2,11 @@
 
 import os
 import sys
-import assistance
+
 import pygame
 import requests
+
+import assistance
 
 map_request = "http://static-maps.yandex.ru/1.x/"
 
@@ -32,11 +34,13 @@ with open(map_file, "wb") as file:
 
 pygame.init()
 
-button_rect = pygame.Rect(545, 5, 50, 50)
+mode_btn_rect = pygame.Rect(545, 5, 50, 50)
+search_btn_rect = pygame.Rect(0, 450, 150, 150)
 
-screen = pygame.display.set_mode((600, 450))
+screen = pygame.display.set_mode((600, 600))
 
-button_img = assistance.load_image('mode.png', -1)
+mode_btn_image = assistance.load_image('mode.png', -1)
+search_btn_image = assistance.load_image('search.png')
 
 screen.blit(pygame.image.load(map_file), (0, 0))
 
@@ -50,9 +54,17 @@ while True:
             pygame.quit()
             sys.exit()
         elif event.type == pygame.MOUSEBUTTONUP:
-            if button_rect.collidepoint(event.pos):
+            if mode_btn_rect.collidepoint(event.pos):
                 print(f'VIEW|{l_arr[l_arr_ind]} -> {l_arr[(l_arr_ind + 1) % 3]}|')
                 l_arr_ind = (l_arr_ind + 1) % 3
+                flag = True
+            if search_btn_rect.collidepoint(event.pos):
+                #toponym_to_find = input('TOPONYM: ')
+                toponym_to_find = "Москва, Лобачевского, д. 92"
+                lon, lat = assistance.searchAdress(toponym_to_find, delta)
+                lon, lat = float(lon), float(lat)
+                toponym_lon, toponym_lat = lon, lat
+                point_flag = True
                 flag = True
 
         if event.type == pygame.KEYDOWN or flag:
@@ -81,33 +93,41 @@ while True:
                 print(f'BW|{lat} -> {lat - delta}|')
                 lat -= delta
             elif event.key == pygame.K_w:
-                print(f'VIEW|{l_arr[l_arr_ind]} -> {l_arr[(l_arr_ind + 1) % 3]}|')
+                print(
+                    f'VIEW|{l_arr[l_arr_ind]} -> {l_arr[(l_arr_ind + 1) % 3]}|'
+                )
                 l_arr_ind = (l_arr_ind + 1) % 3
 
             if delta < 0.0005:
                 delta = 0.0005
             elif delta > 100:
                 delta = 100
-            
+
             if lon < -179:
                 lon = -179
             elif lon > 179:
                 lon = 179
-            
+
             if lat < -89:
                 lat = -89
             elif lat > 89:
                 lat = 89
-            
+
             params["ll"] = ",".join([str(lon), str(lat)])
             params["spn"] = ",".join([str(delta), str(delta)])
             params["l"] = l_arr[l_arr_ind]
+            try:
+                if point_flag:
+                    params["pt"] = ",".join([str(toponym_lon), str(toponym_lat), 'flag'])
+            except:
+                pass
             response = requests.get(map_request, params=params)
 
             if not response:
                 print("Ошибка выполнения запроса:")
                 print(map_request)
-                print("Http статус:", response.status_code, "(", response.reason, ")")
+                print("Http статус:", response.status_code, "(",
+                      response.reason, ")")
                 sys.exit(1)
 
             with open(map_file, "wb") as file:
@@ -116,5 +136,6 @@ while True:
             screen.blit(pygame.image.load(map_file), (0, 0))
             pygame.display.flip()
 
-    screen.blit(button_img, button_rect)
+    screen.blit(mode_btn_image, mode_btn_rect)
+    screen.blit(search_btn_image, search_btn_rect)
     pygame.display.update()
