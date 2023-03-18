@@ -1,4 +1,4 @@
-# 2. Добавить обработку клавиш PgUp и PgDown, по нажатию на которые соответственно увеличивать и уменьшать масштаб отображения карты. Необходимо отслеживать предельные значения, за которые значения переменных не должны заходить.
+# 3. Добавьте обработку клавиш вверх/вниз/вправо/влево, по нажатию на которые необходимо перемещать центр карты в соответствующую сторону на размер экрана.
 
 import os
 import sys
@@ -55,12 +55,35 @@ while True:
             elif event.key == pygame.K_e:
                 print(f'DOWN|{delta}|{delta * 2}|')
                 delta *= 2
+            elif event.key == pygame.K_LEFT:
+                print(f'LEFT|{lon}|{lon - delta}|')
+                lon -= delta
+            elif event.key == pygame.K_RIGHT:
+                print(f'RIGHT|{lon}|{lon + delta}|')
+                lon += delta
+            elif event.key == pygame.K_UP:
+                print(f'UP|{lat}|{lat + delta}|')
+                lat += delta
+            elif event.key == pygame.K_DOWN:
+                print(f'DOWN|{lat}|{lat - delta}|')
+                lat -= delta
 
             if delta < 0.00001:
                 delta = 0.00001
             elif delta > 100:
                 delta = 100
+            
+            if lon < -179:
+                lon = -179
+            elif lon > 179:
+                lon = 179
+            
+            if lat < -89:
+                lat = -89
+            elif lat > 89:
+                lat = 89
 
+            params["ll"] = ",".join([str(lon), str(lat)])
             params["spn"] = ",".join([str(delta), str(delta)])
             response = requests.get(map_request, params=params)
 
