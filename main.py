@@ -1,8 +1,8 @@
-# 3. Добавьте обработку клавиш вверх/вниз/вправо/влево, по нажатию на которые необходимо перемещать центр карты в соответствующую сторону на размер экрана.
+# 4. Добавьте переключатель слоёв карты (схема/спутник/гибрид), при изменении которого надо менять вид карты.
 
 import os
 import sys
-
+import assistance
 import pygame
 import requests
 
@@ -11,11 +11,11 @@ map_request = "http://static-maps.yandex.ru/1.x/"
 lon = 37.565384
 lat = 55.725969
 delta = 0.0009
-
+l_arr, l_arr_ind = ['map', 'sat', 'sat,skl'], 0
 params = {
     "ll": ",".join([str(lon), str(lat)]),
     "spn": ",".join([str(delta), str(delta)]),
-    "l": "map"
+    "l": l_arr[l_arr_ind]
 }
 
 response = requests.get(map_request, params=params)
@@ -26,50 +26,66 @@ if not response:
     print("Http статус:", response.status_code, "(", response.reason, ")")
     sys.exit(1)
 
-map_file = "map.png"
+map_file = "data\\map.png"
 with open(map_file, "wb") as file:
     file.write(response.content)
 
 pygame.init()
+
+button_rect = pygame.Rect(545, 5, 50, 50)
+
 screen = pygame.display.set_mode((600, 450))
+
+button_img = assistance.load_image('mode.png', -1)
 
 screen.blit(pygame.image.load(map_file), (0, 0))
 
 pygame.display.flip()
 
 while True:
+    flag = False
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             os.remove(map_file)
             pygame.quit()
             sys.exit()
+        elif event.type == pygame.MOUSEBUTTONUP:
+            if button_rect.collidepoint(event.pos):
+                print(f'VIEW|{l_arr[l_arr_ind]} -> {l_arr[(l_arr_ind + 1) % 3]}|')
+                l_arr_ind = (l_arr_ind + 1) % 3
+                flag = True
 
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_ESCAPE:
+        if event.type == pygame.KEYDOWN or flag:
+            if flag:
+                pass
+            elif event.key == pygame.K_ESCAPE:
                 pygame.quit()
                 os.remove(map_file)
                 sys.exit()
             elif event.key == pygame.K_q:
-                print(f'UP|{delta}|{delta / 2}|')
+                print(f'UP|{delta} -> {delta / 2}|')
                 delta /= 2
             elif event.key == pygame.K_e:
-                print(f'DOWN|{delta}|{delta * 2}|')
+                print(f'DOWN|{delta} -> {delta * 2}|')
                 delta *= 2
             elif event.key == pygame.K_LEFT:
-                print(f'LEFT|{lon}|{lon - delta}|')
+                print(f'LEFT|{lon} -> {lon - delta}|')
                 lon -= delta
             elif event.key == pygame.K_RIGHT:
-                print(f'RIGHT|{lon}|{lon + delta}|')
+                print(f'RIGHT|{lon} -> {lon + delta}|')
                 lon += delta
             elif event.key == pygame.K_UP:
-                print(f'UP|{lat}|{lat + delta}|')
+                print(f'TW|{lat} -> {lat + delta}|')
                 lat += delta
             elif event.key == pygame.K_DOWN:
-                print(f'DOWN|{lat}|{lat - delta}|')
+                print(f'BW|{lat} -> {lat - delta}|')
                 lat -= delta
+            elif event.key == pygame.K_w:
+                print(f'VIEW|{l_arr[l_arr_ind]} -> {l_arr[(l_arr_ind + 1) % 3]}|')
+                l_arr_ind = (l_arr_ind + 1) % 3
 
-            if delta < 0.00001:
-                delta = 0.00001
+            if delta < 0.0005:
+                delta = 0.0005
             elif delta > 100:
                 delta = 100
             
@@ -82,9 +98,10 @@ while True:
                 lat = -89
             elif lat > 89:
                 lat = 89
-
+            
             params["ll"] = ",".join([str(lon), str(lat)])
             params["spn"] = ",".join([str(delta), str(delta)])
+            params["l"] = l_arr[l_arr_ind]
             response = requests.get(map_request, params=params)
 
             if not response:
@@ -98,3 +115,6 @@ while True:
 
             screen.blit(pygame.image.load(map_file), (0, 0))
             pygame.display.flip()
+
+    screen.blit(button_img, button_rect)
+    pygame.display.update()
