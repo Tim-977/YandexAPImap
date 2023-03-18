@@ -1,4 +1,5 @@
-# 7) Добавьте кнопку «Сброс поискового результата», по нажатию на которую точка найденного объекта сбрасывается.
+# 8) Добавьте поле для вывода полного адреса найденного объекта. В этом поле должен отображаться адрес найденного объекта.
+#    Адрес должен сбрасываться по кнопке «Сброс поискового результата», которая была создана в предыдущем задании.
 
 import os
 import sys
@@ -34,6 +35,7 @@ with open(map_file, "wb") as file:
 
 pygame.init()
 
+
 mode_btn_rect = pygame.Rect(545, 5, 50, 50)
 search_btn_rect = pygame.Rect(0, 450, 150, 150)
 clear_btn_rect = pygame.Rect(150, 450, 150, 150)
@@ -45,6 +47,10 @@ search_btn_image = assistance.load_image('search.png')
 clear_btn_image = assistance.load_image('clear.png')
 
 screen.blit(pygame.image.load(map_file), (0, 0))
+
+font = pygame.font.Font(None, 20)
+#text_surface = font.render('ADDRESS', True, (255, 0, 0))
+#screen.blit(text_surface, (300, 450))
 
 pygame.display.flip()
 
@@ -63,13 +69,17 @@ while True:
             elif search_btn_rect.collidepoint(event.pos):
                 toponym_to_find = input('TOPONYM: ')
                 #toponym_to_find = "Москва, Лобачевского, д. 92"
-                lon, lat = assistance.searchAdress(toponym_to_find, delta)
+                lon, lat, fAdress = assistance.searchAdress(toponym_to_find, delta)
+                text_surface = font.render(fAdress, True, (255, 0, 0))
+                screen.blit(text_surface, (300, 450))
                 lon, lat = float(lon), float(lat)
                 toponym_lon, toponym_lat = lon, lat
                 point_flag = True
                 flag = True
             elif clear_btn_rect.collidepoint(event.pos):
                 print('cleared')
+                text_surface.fill((0, 0, 0))
+                screen.blit(text_surface, (300, 450))
                 point_flag = False
                 flag = True
 
@@ -106,7 +116,7 @@ while True:
 
             if delta < 0.0005:
                 delta = 0.0005
-            elif delta > 100:
+            if delta > 100:
                 delta = 100
 
             if lon < -179:
@@ -118,7 +128,7 @@ while True:
                 lat = -89
             elif lat > 89:
                 lat = 89
-
+            print('DELTA:', delta)
             params["ll"] = ",".join([str(lon), str(lat)])
             params["spn"] = ",".join([str(delta), str(delta)])
             params["l"] = l_arr[l_arr_ind]

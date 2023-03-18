@@ -41,10 +41,16 @@ def searchAdress(toponym_to_find, delta):
     toponym = json_response["response"]["GeoObjectCollection"]["featureMember"][0]["GeoObject"]
     toponym_coodrinates = toponym["Point"]["pos"]
     toponym_longitude, toponym_lattitude = toponym_coodrinates.split(" ")
-    
-    print(f'FOUND: {(toponym_longitude, toponym_lattitude)}')
 
-    return (toponym_longitude, toponym_lattitude)
+    address_details = json_response['response']['GeoObjectCollection']['featureMember'][0]['GeoObject']['metaDataProperty']['GeocoderMetaData']
+    print(address_details)
+    full_address = address_details['text']
+    postal_code = address_details['Address']['postal_code']
+
+    print(f'FOUND: {(toponym_longitude, toponym_lattitude)}')
+    print(f'FULL-ADDRESS: {full_address}\nPOSTAL-CODE: {postal_code}')
+
+    return (toponym_longitude, toponym_lattitude, full_address)
 
 
 
