@@ -61,8 +61,8 @@ while True:
                 l_arr_ind = (l_arr_ind + 1) % 3
                 flag = True
             if search_btn_rect.collidepoint(event.pos):
-                #toponym_to_find = input('TOPONYM: ')
-                toponym_to_find = "Москва, Лобачевского, д. 92"
+                toponym_to_find = input('TOPONYM: ')
+                #toponym_to_find = "Москва, Лобачевского, д. 92"
                 lon, lat = assistance.searchAdress(toponym_to_find, delta)
                 lon, lat = float(lon), float(lat)
                 toponym_lon, toponym_lat = lon, lat
