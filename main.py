@@ -1,5 +1,4 @@
-# 8) Добавьте поле для вывода полного адреса найденного объекта. В этом поле должен отображаться адрес найденного объекта.
-#    Адрес должен сбрасываться по кнопке «Сброс поискового результата», которая была создана в предыдущем задании.
+# 8) Добавьте переключатель, включающий и выключающий приписывание почтового индекса к полному адресу объекта.
 
 import os
 import sys
@@ -35,24 +34,46 @@ with open(map_file, "wb") as file:
 
 pygame.init()
 
-
 mode_btn_rect = pygame.Rect(545, 5, 50, 50)
 search_btn_rect = pygame.Rect(0, 450, 150, 150)
 clear_btn_rect = pygame.Rect(150, 450, 150, 150)
+switch_btn_rect = pygame.Rect(545, 65, 50, 50)
+
 
 screen = pygame.display.set_mode((600, 600))
 
 mode_btn_image = assistance.load_image('mode.png', -1)
 search_btn_image = assistance.load_image('search.png')
 clear_btn_image = assistance.load_image('clear.png')
+switch_btn_on_image = assistance.load_image('switchON.png', -1)
+switch_btn_off_image = assistance.load_image('switchOFF.png', -1)
+
+button_img = switch_btn_off_image
 
 screen.blit(pygame.image.load(map_file), (0, 0))
+screen.blit(switch_btn_off_image, switch_btn_rect)
 
-font = pygame.font.Font(None, 20)
+font = pygame.font.Font(None, 17)
 #text_surface = font.render('ADDRESS', True, (255, 0, 0))
 #screen.blit(text_surface, (300, 450))
 
 pygame.display.flip()
+
+button_state = False
+
+def toggle_button():
+    global button_state
+    button_state = not button_state
+
+
+def update_button():
+    global button_img
+    if button_state:
+        button_img = switch_btn_on_image
+    else:
+        button_img = switch_btn_off_image
+    screen.blit(button_img, (545, 65))
+
 
 while True:
     flag = False
@@ -63,25 +84,54 @@ while True:
             sys.exit()
         elif event.type == pygame.MOUSEBUTTONUP:
             if mode_btn_rect.collidepoint(event.pos):
-                print(f'VIEW|{l_arr[l_arr_ind]} -> {l_arr[(l_arr_ind + 1) % 3]}|')
+                print(
+                    f'VIEW|{l_arr[l_arr_ind]} -> {l_arr[(l_arr_ind + 1) % 3]}|'
+                )
                 l_arr_ind = (l_arr_ind + 1) % 3
                 flag = True
             elif search_btn_rect.collidepoint(event.pos):
                 toponym_to_find = input('TOPONYM: ')
                 #toponym_to_find = "Москва, Лобачевского, д. 92"
-                lon, lat, fAdress = assistance.searchAdress(toponym_to_find, delta)
-                text_surface = font.render(fAdress, True, (255, 0, 0))
-                screen.blit(text_surface, (300, 450))
+                lon, lat, fAdress, postal_code = assistance.searchAdress(toponym_to_find, delta)
+                if button_state:
+                    text_surface = font.render(fAdress + ' ' + str(postal_code), True, (255, 0, 0))
+                    screen.blit(text_surface, (300, 450))
+                else:
+                    text_surface = font.render(fAdress, True, (255, 0, 0))
+                    screen.blit(text_surface, (300, 450))
                 lon, lat = float(lon), float(lat)
                 toponym_lon, toponym_lat = lon, lat
                 point_flag = True
                 flag = True
             elif clear_btn_rect.collidepoint(event.pos):
                 print('cleared')
-                text_surface.fill((0, 0, 0))
-                screen.blit(text_surface, (300, 450))
+                try:
+                    text_surface.fill((0, 0, 0))
+                    screen.blit(text_surface, (300, 450))
+                except:
+                    pass
                 point_flag = False
                 flag = True
+            elif switch_btn_rect.collidepoint(event.pos):
+                print('TOGGLED')
+                toggle_button()
+                update_button()
+                try:
+                    if not point_flag:
+                        text_surface.fill((0, 0, 0))
+                        screen.blit(text_surface, (300, 450))
+                    else:
+                        text_surface.fill((0, 0, 0))
+                        screen.blit(text_surface, (300, 450))
+                        if button_state:
+                            text_surface = font.render(fAdress + ' ' + str(postal_code), True, (255, 0, 0))
+                            screen.blit(text_surface, (300, 450))
+                        else:
+                            text_surface = font.render(fAdress, True, (255, 0, 0))
+                            screen.blit(text_surface, (300, 450))
+                except:
+                    pass
+
 
         if event.type == pygame.KEYDOWN or flag:
             if flag:
@@ -134,7 +184,9 @@ while True:
             params["l"] = l_arr[l_arr_ind]
             try:
                 if point_flag:
-                    params["pt"] = ",".join([str(toponym_lon), str(toponym_lat), 'flag'])
+                    params["pt"] = ",".join(
+                        [str(toponym_lon),
+                         str(toponym_lat), 'flag'])
                 else:
                     del params["pt"]
             except:
@@ -156,5 +208,6 @@ while True:
 
     screen.blit(mode_btn_image, mode_btn_rect)
     screen.blit(search_btn_image, search_btn_rect)
+    screen.blit(button_img, switch_btn_rect)
     screen.blit(clear_btn_image, clear_btn_rect)
     pygame.display.update()

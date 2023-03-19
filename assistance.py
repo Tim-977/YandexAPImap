@@ -50,7 +50,7 @@ def searchAdress(toponym_to_find, delta):
     print(f'FOUND: {(toponym_longitude, toponym_lattitude)}')
     print(f'FULL-ADDRESS: {full_address}\nPOSTAL-CODE: {postal_code}')
 
-    return (toponym_longitude, toponym_lattitude, full_address)
+    return (toponym_longitude, toponym_lattitude, full_address, postal_code)
 
 
 
